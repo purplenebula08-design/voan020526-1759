@@ -710,7 +710,9 @@ Réponse à évaluer : "${currentResponse.slice(0, 2000)}"[LONG TRUNCATED FOR EV
 
     try {
       const evalResult = await callMistralAPI(evalPrompt, "mistral-small-2603");
-      const evalData = JSON.parse(evalResult.choices[0].message.content);
+      let raw = evalResult.choices[0].message.content
+        .replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+      const evalData = JSON.parse(raw);
 
       evaluationLog.push({ iteration: i+1, score: evalData.score, feedback: evalData.feedback });
 
@@ -757,93 +759,80 @@ Nouvelle réponse (UNIQUEMENT le contenu, pas de dialogue) :
 
 // ════════════════ ROUTING INTELLIGENT (ORCHESTRATOR) ════════════════
 async function routeToAgent(userMessage) {
-  logEntry("🧠 Analyse de la tâche avec contexte... ", "info");
+  logEntry("🧠 Analyse de la tâche...", "info");
 
-  // Build agent list for orchestrator
-  const agentsList = Object.values(DEFAULT_AGENT_SYSTEM_PROMPTS)
-    .filter(a => a.name !== 'orchestrator')
-    .map(a => `- ${a.name}${a.system.includes('température') ? '' : ' (température : variable) — Spécialisé'}`)
-    .join('\n·');
+  const routingPrompt = `Tu es l'ORCHESTRATEUR VOANH AI. Analyse la requête et choisis EXACTEMENT UN agent.
 
-  // Build conversation context from recent messages
-  const chatContext = state.messages.filter(m => m.role !== 'system').slice(-6).map(m =>
-    `${m.agentName || m.role.toUpperCase()}: ${m.content.slice(0,200)}`
-  ).join('\n·');
+AGENTS :
+- CodeForge: code, scripts, programmation
+- DevMind: architecture, redesign
+- ResearchBot: recherche, faits, données
+- CreativeFlow: brainstorming, idées, créatif
+- TeacherBot: explications, salutations, questions
+- CriticAgent: critique, validation, audit
 
-  const routingPrompt = `Tu es l'ORCHESTRATEUR VOANH AI. Ta mission : analyser CHAQUE requête utilisateur EN CONTEXTE et décider quel agent spécialisé doit la traiter.
+RÈGLES SIMPLES :
+1. "bonjour", "salut", "coucou", "hello", "hi" → TeacherBot
+2. code, script, programmer → CodeForge
+3. architecture, redesign → DevMind
+4. recherche, faits → ResearchBot
+5. idées, brainstorm, créatif → CreativeFlow
+6. critique, audit, validator → CriticAgent
+7. sinon → TeacherBot
 
-CONTEXTE CONVERSATION PRÉCÉDENTE :
-${chatContext || "Aucun contexte (nouvelle conversation)"}
+Réponds UNIQUEMENT JSON sans markdown :
+{"agent":"TeacherBot","reason":"salutation","conf":95}
 
-AGENTS DISPONIBLES :
-· ${agentsList}
-
-RÈGLES DE ROUTAGE STRICTES :
-1. CODE (génération, debug, refactoring) → CodeForge (temp 0.2) ou DevMind (temp 0.25)
-2. RECHERCHE (analyse données, synthèse facts) → ResearchBot (temp 0.5)
-3. IDÉES CRÉATIVES (brainstorm, concepts innovants) → CreativeFlow (temp 1.4)
-4. EXPLICATIONS (pédagogie, analogies, "comment ça marche") → TeacherBot (temp 0.6)
-5. CRITIQUE (avocat du diable, validation) → CriticAgent (temp 0.3)
-6. SALUTATION/QUI PROPOSER (bonjour, tu es qui...) → TeacherBot (temp 0.6) pour réponse humaine
-7. QUESTION SUR L'IA/SONTECH (quels modèles, comment ça marche) → ResearchBot (temp 0.5)
-
-Pour CHAQUE décision :
-1. Identifie le TYPE EXACT de tâche (CODE/RESEARCH/CREATIVITY/EDUCATION/CRITIQUE/CHIT-CHAT/etc)
-2. Choisis l'agent avec un score de confiance JUSTIFIÉ
-3. Explique ton raisonnement EN PHRASE COMPLÈTE
-4. Si l'agent n'est pas évident, propose un 2ème choix
-
-FORMAT JSON OBLIGATOIRE (réponse UNIQUEMENT avec JSON, pas de texte avant/après) :
-{
-  "taskType": "CODE_GENERATION ou RESEARCH ou CREATIVITY ou EDUCATION ou CHAT ou QUESTION_TECH",
-  "selectedAgent": "CodeForge ou DevMind ou ResearchBot ou CreativeFlow ou TeacherBot ou CriticAgent",
-  "confidence": 85 (entier entre 0 et 100),
-  "reasoning": "Explication claire du choix en contexte de la conversation",
-  "alternativeAgent": "DevMind ou autre (ou null si premier choix évident)",
-  "alternativeConfidence": 60 (ou null si premier choix évident)
-}
-
-DERNIÈRE REQUÊTE UTILISATEUR :
-"${userMessage.slice(0, 1000)}"
+Requête: "${userMessage.slice(0,500)}"
 `.trim();
 
   try {
-    const routeResult = await callMistralAPI(routingPrompt, "mistral-large-2512", 0.3);
-    const routeData = JSON.parse(routeResult.choices[0].message.content);
+    const routeResult = await callMistralAPI(routingPrompt, "mistral-large-2512", 0.2);
+    let raw = routeResult.choices[0].message.content;
 
-    // Validate route data
-    if (!routeData.selectedAgent || !routeData.taskType) {
-      throw new Error("Routing response format invalid");
+    // Remove markdown code blocks (```json ... ```)
+    raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+
+    let routeData;
+    try {
+      routeData = JSON.parse(raw);
+    } catch (e) {
+      throw new Error("Invalid JSON after cleanup");
     }
 
-    // Log le routage
-    const routingLog = `[${routeData.taskType}] → ${routeData.selectedAgent} (${routeData.confidence}%)`;
-    logEntry("✅ Routing terminé", "route", null);
-    logEntry(`   "${routeData.reasoning}"`, "info");
-    logEntry(`   Agents : ${routeData.selectedAgent} (${routeData.confidence}%)`, "route", routeData.selectedAgent, routeData.confidence);
+    const agentName = routeData.agent || "TeacherBot";
+    const confidence = routeData.conf || 50;
 
-    if (routeData.alternativeAgent) {
-      logEntry(`   Alternative: ${routeData.alternativeAgent} (${routeData.alternativeConfidence}%)`, "info");
-    }
+    logEntry("✅ Route", "route", agentName, confidence);
+    logEntry(`   → ${routeData.reason || "auto"}`, "info");
 
     return {
-      agentName: routeData.selectedAgent,
-      temperature: MODELS.find(m => m.id.startsWith('codestral') && routeData.selectedAgent === 'CodeForge')?.temp || 0.7,
-      confidence: routeData.confidence,
-      routingLog,
-      agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS[routeData.selectedAgent]
+      agentName,
+      temperature: getAgentTemp(agentName),
+      confidence,
+      agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS[agentName] || DEFAULT_AGENT_SYSTEM_PROMPTS.TeacherBot
     };
 
   } catch (e) {
-    logEntry(`❌ Routing échoué : ${e.message.slice(0,50)}, fallback à CodeForge`, "warning");
+    logEntry(`❌ Routing ${e.message.slice(0,30)} → CodeForge`, "warning");
     return {
       agentName: "CodeForge",
       temperature: 0.2,
-      confidence: 50,
-      routingLog: "[ROUTING_FAILED] → CodeForge (fallback)",
+      confidence: 30,
       agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS.CodeForge
     };
   }
+}
+
+function getAgentTemp(agentName) {
+  return {
+    "CodeForge": 0.2,
+    "DevMind": 0.25,
+    "ResearchBot": 0.5,
+    "CreativeFlow": 1.4,
+    "TeacherBot": 0.6,
+    "CriticAgent": 0.3
+  }[agentName] || 0.7;
 }
 
 // ════════════════════════════════════════
@@ -1056,9 +1045,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Init new chat
   await newChat();
 
-  // Auto-enable log
+  // Auto-enable log IMMEDIATELY (before any messages)
   activityLogEnabled = true;
-  logEntry("Activity log activé par défaut", "info");
+  if (activityLogEnabled) {
+    const logPanel = $("#activity-log");
+    if (logPanel) logPanel.classList.add("active");
+    const btn = $("#activity-toggle");
+    if (btn) btn.textContent = "▣ LOG OFF";
+  }
+  // Force log the welcome message
+  if ($("#log-entries")) {
+    logEntry("🚀 VOANH AI Orchestrateur démarré", "info", "SYSTEM", 10);
+  }
 
   // Events
   $("#send-btn").onclick = sendMessage;
