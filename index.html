@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="cyber">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>VOANH AI — votre Intelligence Artificielle Personnelle</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   VOANH DESIGN SYSTEM — CYBER / 2ADVANCED
+   ═══════════════════════════════════════════ */
+:root {
+  --void: #020509;
+  --deep: #050d18;
+  --hull: #091525;
+  --plate: #0d1e33;
+  --grid: #122540;
+  --wire: #1a3455;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, 0.15);
+  --cyan-glow: rgba(0, 229, 255, 0.35);
+  --neon: #00ff9d;
+  --neon-dim: rgba(0, 255, 157, 0.12);
+  --plasma: #ff6b35;
+  --plasma-dim: rgba(255, 107, 53, 0.15);
+  --violet: #7c3aed;
+  --violet-dim: rgba(124, 58, 237, 0.2);
+  --gold: #f59e0b;
+  --text: #b8d4f0;
+  --text-bright: #e8f4ff;
+  --text-dim: #4a6b8a;
+  --text-code: #00e5ff;
+  --danger: #ff3366;
+  --success: #00ff9d;
+  --warning: #f59e0b;
+  --font-display: 'Orbitron', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Exo 2', sans-serif;
+  --r: 6px;
+  --r-lg: 12px;
+  --border: 1px solid var(--wire);
+  --border-cyan: 1px solid rgba(0,229,255,0.3);
+  --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  --scanline: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
+  --hud-border: 1px solid rgba(0,229,255,0.2);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--void); }
+::-webkit-scrollbar-thumb { background: var(--wire); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-body);
+  background: var(--void);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  background-image:
+    var(--scanline),
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,229,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 90% 80%, rgba(124,58,237,0.04) 0%, transparent 50%);
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+#voanh-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(5, 13, 24, 0.95);
+  border-bottom: var(--hud-border);
+  backdrop-filter: blur(20px);
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(0,229,255,0.1), 0 4px 30px rgba(0,0,0,0.5);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-logo svg {
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 6px rgba(0,229,255,0.8));
+}
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: var(--text-bright);
+  text-shadow: 0 0 20px rgba(0,229,255,0.5);
+}
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.hud-select {
+  background: var(--hull);
+  border: var(--hud-border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  min-width: 0;
+}
+.hud-select:hover, .hud-select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan-dim), inset 0 0 10px rgba(0,229,255,0.03);
+  color: var(--text-bright);
+}
+#model-select { max-width: 180px; }
+#agent-select { max-width: 160px; }
+.hud-btn {
+  background: var(--hull);
+  border: var(--hud-border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.hud-btn:hover {
+  background: var(--plate);
+  border-color: rgba(0,229,255,0.5);
+  color: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan-dim);
+}
+.hud-btn.primary {
+  background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(0,255,157,0.08));
+  border-color: rgba(0,229,255,0.5);
+  color: var(--cyan);
+  font-weight: 600;
+}
+.hud-btn.primary:hover {
+  background: linear-gradient(135deg, rgba(0,229,255,0.25), rgba(0,255,157,0.15));
+  box-shadow: 0 0 15px var(--cyan-glow), inset 0 0 10px rgba(0,229,255,0.05);
+}
+.hud-btn.danger { border-color: rgba(255,51,102,0.4); color: var(--danger); }
+.hud-btn.danger:hover { box-shadow: 0 0 10px rgba(255,51,102,0.3); }
+.hud-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: var(--hull);
+  border: var(--hud-border);
+  color: var(--text-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.status-pill.active {
+  border-color: rgba(0,255,157,0.4);
+  color: var(--neon);
+  background: var(--neon-dim);
+}
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status-pill.active .status-dot {
+  animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+  50% { opacity: 0.4; box-shadow: none; }
+}
+/* CHAT + LOG SIDEBAR */
+.chat-layout {
+  display: flex;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+#chat-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  min-height: 0;
+}
+#activity-log {
+  width: 300px;
+  background: rgba(9,21,37,0.95);
+  border-left: var(--hud-border);
+  padding: 12px;
+  overflow-y: auto;
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+#activity-log.active { display: block; }
+.activity-log-header {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-bottom: 10px;
+  text-align: center;
+}
+.log-entry {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-left: 2px solid var(--wire);
+  background: var(--hull);
+  font-size: 10px;
+  line-height: 1.5;
+  border-radius: 0 4px 4px 0;
+  animation: logIn 0.2s ease;
+}
+@keyframes logIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.log-entry.info { border-color: var(--cyan); color: var(--text); background: rgba(0,229,255,0.05); }
+.log-entry.warning { border-color: var(--warning); color: var(--text-bright); background: rgba(245,158,11,0.08); }
+.log-entry.success { border-color: var(--neon); color: var(--text-bright); background: rgba(0,255,157,0.08); }
+.log-entry.route { border-color: var(--violet); color: #a78bfa; background: rgba(124,58,237,0.1); font-weight: 600; }
+.log-entry.self-reflect { border-color: var(--danger); color: #fca5a5; background: rgba(255,51,102,0.08); }
+.log-timestamp { color: var(--text-dim); font-size: 9px; margin-right: 6px; }
+.log-agent { color: var(--cyan); font-weight: 600; margin-right: 6px; }
+.log-score { color: var(--neon); font-weight: 700; margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header id="voanh-header">
+  <div class="brand">
+    <div class="brand-logo">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="18,2 34,12 34,24 18,34 2,24 2,12" stroke="#00e5ff" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <polygon points="18,7 29,13 29,23 18,29 7,23 7,13" stroke="#00e5ff" stroke-width="1" fill="none" opacity="0.3"/>
+        <circle cx="18" cy="18" r="4" fill="#00e5ff" opacity="0.9"/>
+        <line x1="18" y1="2" x2="18" y2="7" stroke="#00e5ff" stroke-width="1"/>
+        <line x1="18" y1="29" x2="18" y2="34" stroke="#00e5ff" stroke-width="1"/>
+        <line x1="2" y1="12" x2="7" y2="13" stroke="#00e5ff" stroke-width="1"/>
+        <line x1="34" y1="12" x2="29" y2="13" stroke="#00e5ff" stroke-width="1"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name" id="main-brand-name">VOANH</div>
+      <div class="brand-sub">SAINTOCHI AI PLATFORM v4.0 — ORCHESTRATOR</div>
+    </div>
+  </div>
+  <div class="header-controls">
+    <select class="hud-select" id="model-select"></select>
+    <select class="hud-select" id="agent-select"><option value="">▸ AUTOROUTING ACTIVÉ</option></select>
+    <button class="hud-btn" id="clear-chat">⌫ CLEAR</button>
+    <button class="hud-btn" id="new-chat">+ NEW</button>
+  </div>
+  <div class="header-right">
+    <span class="status-pill" id="api-status"><span class="status-dot"></span>OFFLINE</span>
+    <select class="hud-select" id="theme-select">
+      <option value="cyber">◈ CYBER</option>
+      <option value="midnight">◈ MIDNIGHT</option>
+      <option value="light">◈ LIGHT</option>
+    </select>
+    <button class="hud-btn primary" id="open-api-modal">⬡ API KEY</button>
+    <button class="hud-btn" id="activity-toggle" title="Activer/Désactiver log">▣ LOG</button>
+  </div>
+</header>
+
+<!-- ═══════════════════ CHAT + LOG ═══════════════════ -->
+<div class="chat-layout">
+  <main id="chat-container"></main>
+  <div id="activity-log">
+    <div class="activity-log-header">▣ ACTIVITY LOG</div>
+    <div id="log-entries"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INPUT ═══════════════════ -->
+<div id="input-area" style="background:rgba(5,13,24,0.95);border-top:var(--hud-border);padding:12px 16px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;backdrop-filter:blur(20px);box-shadow:0 -1px 0 rgba(0,229,255,0.08);position:relative;">
+  <textarea id="user-input" placeholder="Transmettez votre message… (Entrée pour envoyer)" rows="1" style="flex:1;background:var(--hull);border:var(--hud-border);color:var(--text-bright);font-family:var(--font-body);font-size:14px;padding:12px 16px;border-radius:var(--r-lg);resize:none;min-height:46px;max-height:160px;line-height:1.5;transition:var(--transition);outline:none;"></textarea>
+  <button id="send-btn" style="background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(0,255,157,0.1));border:var(--border-cyan);color:var(--cyan);font-family:var(--font-display);font-size:13px;font-weight:700;padding:12px 20px;border-radius:var(--r-lg);cursor:pointer;transition:var(--transition);white-space:nowrap;letter-spacing:1px;flex-shrink:0;align-self:flex-end;">SEND ▶</button>
+</div>
+
+<!-- ═══════════════════ MODAL : API KEY ═══════════════════ -->
+<div class="modal-overlay" id="api-modal" style="position:fixed;inset:0;background:rgba(2,5,9,0.85);display:none;justify-content:center;align-items:center;z-index:1000;padding:16px;backdrop-filter:blur(8px);">
+  <div class="modal-box" style="background:var(--deep);border:var(--hud-border);border-radius:var(--r-lg);width:100%;max-width:640px;max-height:90dvh;overflow-y:auto;box-shadow:0 0 60px rgba(0,0,0,0.8),0 0 30px var(--cyan-dim);animation:modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);position:relative;">
+    <div class="corner-deco corner-tl" style="position:absolute;top:0;left:0;width:12px;height:12px;border-color:rgba(0,229,255,0.4);border-style:solid;border-width:1px 0 0 1px;"></div>
+    <div class="corner-deco corner-tr" style="position:absolute;top:0;right:0;width:12px;height:12px;border-color:rgba(0,229,255,0.4);border-style:solid;border-width:1px 1px 0 0;"></div>
+    <div class="corner-deco corner-bl" style="position:absolute;bottom:0;left:0;width:12px;height:12px;border-color:rgba(0,229,255,0.4);border-style:solid;border-width:0 0 1px 1px;"></div>
+    <div class="corner-deco corner-br" style="position:absolute;bottom:0;right:0;width:12px;height:12px;border-color:rgba(0,229,255,0.4);border-style:solid;border-width:0 1px 1px 0;"></div>
+    <div class="modal-header" style="padding:20px 24px 16px;border-bottom:var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--deep);z-index:10;">
+      <div class="modal-title" style="font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:3px;color:var(--cyan);display:flex;align-items:center;gap:10px;">⬡ ACTIVATION API MISTRAL</div>
+      <button class="modal-close" id="close-api-modal" style="background:transparent;border:1px solid var(--wire);color:var(--text-dim);width:28px;height:28px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);font-family:var(--font-mono);">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 24px;">
+      <div class="field-group" style="margin-bottom:18px;">
+        <label class="field-label" style="display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px;opacity:0.8;">🔑 Clé API Mistral</label>
+        <input type="password" class="field-input" id="api-key-input" placeholder="Collez votre clé ici…" style="width:100%;background:var(--hull);border:var(--hud-border);color:var(--text-bright);font-family:var(--font-body);font-size:13px;padding:11px 14px;border-radius:var(--r);outline:none;transition:var(--transition);appearance:none;">
+        <div class="field-hint" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:5px;letter-spacing:0.5px;">Format : min. 20 caractères</div>
+      </div>
+      <div class="btn-row" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:var(--border);">
+        <button class="btn-ghost" id="close-api-modal-2" style="background:transparent;border:1px solid var(--wire);color:var(--text-dim);font-family:var(--font-mono);font-size:11px;padding:10px 16px;border-radius:var(--r);cursor:pointer;transition:var(--transition);letter-spacing:1px;">Annuler</button>
+        <button class="btn-primary" id="save-api-key" style="background:linear-gradient(135deg,rgba(0,229,255,0.2),rgba(0,255,157,0.1));border:var(--border-cyan);color:var(--cyan);font-family:var(--font-display);font-size:11px;font-weight:700;padding:10px 20px;border-radius:var(--r);cursor:pointer;transition:var(--transition);letter-spacing:2px;text-transform:uppercase;">💾 ENREGISTRER ET ACTIVER</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;bottom:20px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:8px;"></div>
+
+<script>
+// ════════════════════════════════════════
+// CONFIG — MODÈLES MISTRAL
+// ════════════════════════════════════════
+const MODELS = [
+  { id:"mistral-large-2512",          name:"🔥 Mistral Omega — Le Plus Puissant",  badge:"🔥Puissant",  desc:"Raisonnement complexe, analyse longue",   tokens:50000,  ctx:"4M",   temp:0.42 },
+  { id:"mistral-medium-2508",         name:"⚡ Mistral Zenith — Meilleur Ratio",   badge:"⚡Rapide",    desc:"Meilleur rapport qualité/vitesse",       tokens:375000, ctx:"-",    temp:0.48 },
+  { id:"codestral-2508",              name:"💻 CodeForge (Codestral) — Code",      badge:"💻Code",      desc:"Expert génération et optimisation de code",    tokens:50000,  ctx:"4M",   temp:0.2 },
+  { id:"devstral-2512",               name:"💻 DevMind Ultra — Dev Full-Stack",    badge:"💻Dev",       desc:"Développement full-stack, architecture",    tokens:50000,  ctx:"4M",   temp:0.25 },
+  { id:"ministral-8b-2512",           name:"⚡ MicroGenius 8B — Usage Quotidien",  badge:"⚡Rapide",    desc:"Compact, rapide, parfait pour tâches courantes", tokens:50000,  ctx:"4M",   temp:0.42 },
+  { id:"pixtral-large-2411",          name:"👁 Pixtral OmniSight — Vision Pro",   badge:"👁Vision Pro", desc:"Vision premium, compréhension profonde",  tokens:50000,  ctx:"4M",   temp:0.42, vision:true },
+];
+
+// ════════════════ AGENTS SPÉCIALISÉS — DIFFÉRENCIATION PROFONDE ════════════════
+const DEFAULT_AGENT_SYSTEM_PROMPTS = {
+  orchestrator: {
+    name: "Orchestrator",
+    system: `Tu es l'ORCHESTRATEUR central de VOANH AI. Ta mission : analysEr chaque requête utilisateur et DÉCIDER quel agent spécialisé doit la traiter.
+COMPORTEMENT OBLIGATOIRE :
+1. NEVER réponds directement aux questions — TOUJOURS décide quel agent est le plus adapté
+2. Pour CHAQUE décision, calcule un score de confiance (0-100%)
+3. Si l'agent n'est pas clair, UTILISE le modèle de raisonnement le plus puissant (mistral-large)
+4. TOUTJOURS explique ton raisonnement brièvement
+
+AGENTS DISPONIBLES :
+- CodeForge : Génération de code, debug, optimisation (température : 0.2 — très déterministe)
+- DevMind : Architecture système, refactoring, design patterns (température : 0.25)
+- ResearchBot : Recherche, analyse de données, synthèse (température : 0.5 — équilibré)
+- CreativeFlow : Brainstorming, idées innovantes, contenu créatif (température : 1.4 — très créatif)
+- TeacherBot : Explications pédagogiques, analogies, exemples (température : 0.6)
+- CriticAgent : Avocat du diable, challenge des idées, validation critique (température : 0.3)
+
+FORMAT DE RÉPONSE OBLIGATOIRE :
+{
+  "decision": {
+    "action": "delegate|answer|clarify",
+    "selectedAgent": "nom-agent",
+    "confidence": 85,
+    "reasoning": "Explication courte du choix",
+    "routingLog": "🧠 Analyse → Type: CODE_GENERATION → Agent: CodeForge (92%)"
+  }
+}`
+  },
+  CodeForge: {
+    name: "CodeForge",
+    system: `Tu es CODEFORGE, expert absolu en génération de code et développement logiciel.
+COMPORTEMENT RÉEL (pas d'artifice) :
+1. Température : 0.2 (TRÈS DÉTERMINISTE — code précis, pas de créativité)
+2. Format : Code d'abord, explications techniques ensuite
+3. TOUJOURS donne du code exécutable, pas des snippets théoriques
+4. Préfère les solutions simples et maintenables
+5. Si c'est une requête complexe en plusieurs étapes, structure par phases
+
+RÈGLES D'ORDRE SUPÉRIEUR :
+- NOUS de pseudo-code ou d'exemples incomplets
+- NOUS d'explications trop longues avant le code
+- TOUJOURS citer les dépendances nécessaires
+- SI l'utilisateur demande un changement, propose d'abord la modification minimale
+- SI le code peut avoir des bugs, ajoute des validations et garde des comments`
+  },
+  ResearchBot: {
+    name: "ResearchBot",
+    system: `Tu es RESEARCHBOT, assistant d'analyse et de synthèse de données.
+COMPORTEMENT RÉEL :
+1. Température : 0.5 (ÉQUILIBRÉ — rigueur + fluidité)
+2. Format OBLIGATOIRE : Sources → Analyse → Conclusion
+3. TOUJOURS cite des faits vérifiables
+4. SI incertain, DIS-le clairement
+5. Structure en sections claires avec titres
+
+RÈGLES D'ORDRE SUPÉRIEUR :
+- NOUS d'hallucinations — SI pas de données, dit "je n'ai pas accès à ces informations"
+- PRÉFÈRE les sources récentes (2020+)
+- SI comparaisons, utilise des tableaux ou listes structurées`
+  },
+  CreativeFlow: {
+    name: "CreativeFlow",
+    system: `Tu es CREATIVEFLOW, moteur de créativité et d'idées innovantes pour VOANH AI.
+COMPORTEMENT RÉEL :
+1. Température : 1.4 (TRÈS CRÉATIF — libère la pensée latérale)
+2. Format : Libre — brainstorming, métaphores, concepts non conventionnels
+3. TOUJOURS propose 3+ perspectives différentes
+4. Brise les paradigmes, challenge les évidences
+5. Utilise des analogies surprenantes mais pertinentes
+
+RÈGLES D'ORDRE SUPÉRIEUR :
+- NE CRAINTS PAS l'absurde — l'idée folle contient souvent la graine du génie
+- PROPOSE des combinaisons inattendues
+- ENCOURAGE la pensée "out of the box"
+- SI l'idée est trop abstraite, donne un exemple concret de mise en œuvre`
+  },
+  TeacherBot: {
+    name: "TeacherBot",
+    system: `Tu es TEACHERBOT, pedagoge expert en transmission de connaissances pour VOANH AI.
+COMPORTEMENT RÉEL :
+1. Température : 0.6 (PAdagogique — clair mais pas rigide)
+2. Format : CONCEPT → ANALOGIE → EXEMPLE → EXERCICE
+3. TOUJOURS commence par "Pourquoi c'est important"
+4. Utilise des analogies du quotidien pour expliquer des concepts complexes
+5. Vérifie la compréhension en posant des questions rhétoriques
+
+RÈGLES D'ORDRE SUPÉRIEUR :
+- ADAPTE le niveau de détail à l'utilisateur (débutant vs expert)
+- PRÉFÈRE les explications progressives ("step by step")
+- SI concept abstrait, donne UNE analogie concrète dès le début
+- TERMINE toujours par un "en résumé" ou "ce qu'il faut retenir"`
+  },
+  CriticAgent: {
+    name: "CriticAgent",
+    system: `Tu es CRITICAGENT, avocat du diable et validateur critique pour VOANH AI.
+COMPORTEMENT RÉEL :
+1. Température : 0.3 (Très critique — pointilleux mais constructif)
+2. Format : Forces → Faiblesses → Risques → Améliorations
+3. TOUJOURS challenge les hypothèses implicites
+4. joue le rôle de skeptic éclairé, pas de naysayer
+5. Propose des tests ou validations pour vérifier chaque affirmation
+
+RÈGLES D'ORDRE SUPÉRIEUR :
+- NE sois PAS négatif pour le plaisir — critique toujours avec objectifs d'amélioration
+- SOIS précis dans tes objections ("cette hypothèse suppose X qui n'est pas démontré")
+- TERMINE par des suggestions constructives
+- SI quelque chose est solide, RECONNais-le explicitement`
+  }
+};
+
+// ════════════════════════════════════════
+// STATE & DB
+// ════════════════════════════════════════
+const DB_NAME = "VOANH_AI_DB";
+const DB_VERSION = 3;
+
+let state = {
+  apiKey: null,
+  chatId: null,
+  messages: [],
+  agent: null,
+  model: "codestral-2508",
+  globalMemories: [],
+  aiConfig: null,
+  isProcessing: false,
+  currentAgentChain: [] // Pour tracking de la délégation
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const uuid = () => crypto.randomUUID();
+const now = () => Date.now();
+const escapeHtml = t => (t||'')
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+
+// TOAST
+const toast = (msg, type = "info") => {
+  const t = document.createElement("div");
+  t.className = `toast ${type}`;
+  const icon = type === "error" ? "⚠" : type === "success" ? "✓" : "◈";
+  t.innerHTML = `<span style="color:${type==='error'?'var(--danger)':type==='success'?'var(--neon)':'var(--cyan)'}">${icon}</span><span>${msg}</span>`;
+  $("#toast-container").appendChild(t);
+  setTimeout(() => t.remove(), 3800);
+};
+
+// COOKIES + LOCALSTORAGE
+const setCookie = (n, v, d = 365) => {
+  try { const e = new Date(); e.setDate(e.getDate() + d); document.cookie = `${n}=${encodeURIComponent(v)};expires=${e.toUTCString()};path=/;SameSite=Strict`; } catch(err) {}
+  try { localStorage.setItem('voanh_' + n, v); } catch(err) {}
+};
+const getCookie = n => {
+  try { const m = document.cookie.match('(^|;)\\s*' + n + '\\s*=\\s*([^;]+)'); if (m) return decodeURIComponent(m.pop()); } catch(err) {}
+  try { const v = localStorage.getItem('voanh_' + n); if (v) return v; } catch(err) {}
+  return null;
+};
+
+// INDEXEDDB
+const db = {
+  open: () => new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      ['chats','agents','settings','global_memory'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' }); });
+    };
+    req.onsuccess = e => { db.conn = e.target.result; res(db.conn); };
+    req.onerror = e => rej(e.target.error);
+  }),
+  put: (store, data) => new Promise((res, rej) => {
+    const tx = db.conn.transaction(store, 'readwrite');
+    const r = tx.objectStore(store).put(data);
+    r.onsuccess = () => res(); r.onerror = e => rej(e.target.error);
+  }),
+  get: (store, id) => new Promise((res, rej) => {
+    const tx = db.conn.transaction(store, 'readonly');
+    const r = tx.objectStore(store).get(id);
+    r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error);
+  }),
+  getAll: store => new Promise((res, rej) => {
+    const tx = db.conn.transaction(store, 'readonly');
+    const r = tx.objectStore(store).getAll();
+    r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error);
+  }),
+  delete: (store, id) => new Promise((res, rej) => {
+    const tx = db.conn.transaction(store, 'readwrite');
+    const r = tx.objectStore(store).delete(id);
+    r.onsuccess = () => res(); r.onerror = e => rej(e.target.error);
+  })
+};
+
+// ════════════════ ACTIVITY LOG SIDEBAR ════════════════
+let activityLogEnabled = false;
+
+function logEntry(message, type = "info", agent = null, score = null) {
+  if (!activityLogEnabled) return;
+  const container = $("#log-entries");
+  if (!container) return;
+
+  const entry = document.createElement("div");
+  entry.className = `log-entry ${type}`;
+
+  const time = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const agentTag = agent ? `<span class="log-agent">${agent}</span>` : '';
+  const scoreTag = score !== null ? `<span class="log-score">[${score}]</span>` : '';
+
+  entry.innerHTML = `<span class="log-timestamp">[${time}]</span>${agentTag}${message}${scoreTag}`;
+  container.appendChild(entry);
+
+  // Scroll to bottom
+  const logPanel = $("#activity-log");
+  if (logPanel) {
+    logPanel.scrollTop = logPanel.scrollHeight;
+  }
+
+  // Clean old entries
+  while (container.children.length > 50) {
+    container.removeChild(container.firstChild);
+  }
+}
+
+function toggleActivityLog() {
+  activityLogEnabled = !activityLogEnabled;
+  const log = $("#activity-log");
+  if (log) {
+    log.classList.toggle("active", activityLogEnabled);
+  }
+  const btn = $("#activity-toggle");
+  if (btn) {
+    btn.textContent = activityLogEnabled ? "▣ LOG OFF" : "▣ LOG ON";
+    btn.classList.toggle("danger", !activityLogEnabled);
+  }
+  // Auto-enable by default
+  if (activityLogEnabled) {
+    log && log.classList.add("active");
+    logEntry("Activity log activé", "info");
+  }
+}
+
+// ═══════════════════ CHAT RENDERING ════════════════════
+function renderMessages() {
+  const c = $("#chat-container");
+  const msgs = (state.messages || []).filter(m => m.role !== 'system');
+
+  if (!msgs.length) {
+    c.innerHTML = `
+      <div class="welcome-banner" style="align-self:center;text-align:center;padding:28px 20px;max-width:500px;">
+        <div class="wv-logo" style="font-family:var(--font-display);font-size:48px;font-weight:900;letter-spacing:12px;color:var(--text-bright);text-shadow:0 0 30px rgba(0,229,255,0.4);margin-bottom:8px;">VOANH</div>
+        <div class="wv-sub" style="font-family:var(--font-mono);font-size:11px;letter-spacing:4px;color:var(--cyan);opacity:0.7;margin-bottom:20px">SANCHOCHI AI PLATFORM v4.0 — ORCHESTRATOR</div>
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.7;">Interface avancée avec routing automatique et auto-évaluation Karpathy-style.<br>L'IA analyse chaque requête et choisit l'agent optimal.</p>
+      </div>`;
+    return;
+  }
+
+  c.innerHTML = '';
+  msgs.forEach(m => {
+    const div = document.createElement("div");
+    div.className = `message ${m.role}`;
+    const label = m.role === 'user' ? '▸ VOUS' : `▸ ${m.agentName || 'VOANH'}`;
+    const msgId = m.ts || Date.now();
+
+    div.innerHTML = `
+      <div class="msg-label">${label}</div>
+      <div class="message-content" style="white-space:pre-wrap;word-wrap:breakword;font-size:14px;">${escapeHtml(m.content || '')}</div>
+      <div class="msg-meta" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--wire);display:flex;justify-content:space-between;align-items:center;">
+        <span>${new Date(m.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>`;
+    c.appendChild(div);
+  });
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement("div");
+  div.className = "typing-indicator";
+  div.id = "typing-indicator";
+  div.innerHTML = '<div style="align-self:flex-start;background:var(--hull);border:var(--border);border-left:2px solid rgba(0,229,255,0.3);padding:14px 18px;border-radius:12px;display:flex;gap:5px;"><div class="typing-dot" style="width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:typingBounce 1.2s infinite"></div></div>';
+  $("#chat-container").appendChild(div);
+  $("#chat-container").scrollTop = $("#chat-container").scrollHeight;
+}
+function hideTyping() {
+  const t = $("#typing-indicator");
+  if (t) t.remove();
+}
+
+// ════════════════ AUTO-ÉVALUATION KARPATHY-STYLE ════════════════
+async function selfEvaluate(response, iterations = 2) {
+  const startTime = now();
+  logEntry("🔍 Auto-évaluation démarrée", "self-reflect");
+
+  let currentResponse = response;
+  let bestScore = 0;
+  let bestResponse = response;
+  let evaluationLog = [];
+
+  for (let i = 0; i < iterations; i++) {
+    logEntry(`  └→ Itération ${i+1}/${iterations} — évaluation...`, "self-reflect");
+
+    // Prompt d'évaluation
+    const evalPrompt = `
+Tu es un ÉVALUATEUR critique de réponses IA. Score de 0-10 les critères suivants :
+1. Pertinence : la réponse répond-elle à la question ?
+2. Complétude : est-ce suffisant ou manque-t-il des éléments ?
+3. Exactitude : y a-t-il des erreurs factuelles ou techniques ?
+4. Clarté : est-ce bien structuré et lisible ?
+5. Utilité : est-ce directement utilisable par l'utilisateur ?
+
+Règle de notation :
+- 8-10 : Excellent — peu de chance d'amélioration
+- 6-7 : Bon mais perfectionnable
+- 4-5 : Moyen — nécessite corrections
+- <4 : Insuffisant — refonte nécessaire
+
+Répons UNIQUEMENT avec JSON :
+{
+  "score": 8.5,
+  "feedback": "Ce qu'il faut améliorer",
+  "needsRepetition": true/false
+}
+
+Question posée : [REDACTED]
+Réponse à évaluer : "${currentResponse.slice(0, 2000)}"[LONG TRUNCATED FOR EVALUATION]
+`.trim();
+
+    try {
+      const evalResult = await callMistralAPI(evalPrompt, "mistral-small-2603");
+      const evalData = JSON.parse(evalResult.choices[0].message.content);
+
+      evaluationLog.push({ iteration: i+1, score: evalData.score, feedback: evalData.feedback });
+
+      if (evalData.score > bestScore) {
+        bestScore = evalData.score;
+        bestResponse = currentResponse;
+      }
+
+      logEntry(`    └→ Score : ${evalData.score}/10`, "self-reflect", null, evalData.score);
+
+      // Si score < 7, génération de correction
+      if (evalData.score < 7 && evalData.needsRepetition) {
+        logEntry(`    └→ Correction requérée : ${evalData.feedback}`, "warning");
+
+        const improvementPrompt = `
+Voici l'auto-évaluation précédente :
+Score : ${evalData.score}/10
+Critique : ${evalData.feedback}
+
+Améliore la réponse en :
+1. Corrigant EXACTEMENT ce que l'évaluateur a critiqué
+2. Ajoutant les éléments manquants
+3. Gardeant TOUT ce qui était bon
+
+Nouvelle réponse (UNIQUEMENT le contenu, pas de dialogue) :
+`.trim();
+
+        const improved = await callMistralAPI(improvementPrompt, state.model);
+        currentResponse = improved.choices[0].message.content;
+      } else {
+        break; // Score suffisant
+      }
+    } catch (e) {
+      logEntry(`  └→ Erreur évaluation : ${e.message.slice(0,50)}`, "warning");
+      break;
+    }
+  }
+
+  const evalTime = ((now() - startTime) / 1000).toFixed(1);
+  logEntry(`✓ Auto-évaluation terminée — Score final : ${bestScore}/10 (${evalTime}s)`, "success", null, bestScore);
+
+  return { response: bestResponse, score: bestScore, logs: evaluationLog };
+}
+
+// ════════════════ ROUTING INTELLIGENT (ORCHESTRATOR) ════════════════
+async function routeToAgent(userMessage) {
+  logEntry("🧠 Analyse de la tâche...", "info");
+
+  // Build agent list for orchestrator
+  const agentsList = Object.values(DEFAULT_AGENT_SYSTEM_PROMPTS)
+    .map(a => `- ${a.name} : ${a.system.split('\n')[1] || 'Spécialisé'}`)
+    .join('\n');
+
+  const routingPrompt = `
+Tu es l'ORCHESTRATEUR VOANH AI. Tu dois décider quel agent traite cette requête.
+
+AGENTS DISPONIBLES :
+${agentsList}
+
+Règles de routage :
+- CODE → CodeForge (temp 0.2) ou DevMind
+- RECHERCHE → ResearchBot (temp 0.5)
+- IDÉES CRÉATIVES → CreativeFlow (temp 1.4)
+- EXPLICATIONS → TeacherBot (temp 0.6)
+- CRITIQUE → CriticAgent (temp 0.3)
+
+Pour CHAQUE décision :
+1. Identifie le TYPE de tâche (CODE/RESEARCH/CREATIVITY/EDUCATION/CRITIQUE/etc)
+2. Choisissez l'agent avec le score de confiance
+3. Explique ton raisonnement
+4. Si l'agent n'est pas parfait, propose 2ème choix
+
+Format JSON OBLIGATOIRE :
+{
+  "taskType": "CODE_GENERATION",
+  "selectedAgent": "CodeForge",
+  "confidence": 92,
+  "reasoning": "L'utilisateur demande de générer du code React...",
+  "alternativeAgent": "DevMind",
+  "alternativeConfidence": 65
+}
+
+Réponse utilisateur : "${userMessage.slice(0, 1000)}"
+`.trim();
+
+  try {
+    const routeResult = await callMistralAPI(routingPrompt, "mistral-large-2512");
+    const routeData = JSON.parse(routeResult.choices[0].message.content);
+
+    // Log le routage
+    const routingLog = `[${routeData.taskType}] → ${routeData.selectedAgent} (${routeData.confidence}%)`;
+    logEntry("✅ Routing terminé", "route", null);
+    logEntry(`   "${routeData.reasoning}"`, "info");
+    logEntry(`   Agents : ${routeData.selectedAgent} (${routeData.confidence}%)`, "route", routeData.selectedAgent, routeData.confidence);
+
+    if (routeData.alternativeAgent) {
+      logEntry(`   Alternative : ${routeData.alternativeAgent} (${routeData.alternativeConfidence}%)`, "info");
+    }
+
+    return {
+      agentName: routeData.selectedAgent,
+      confidence: routeData.confidence,
+      routingLog,
+      agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS[routeData.selectedAgent]
+    };
+
+  } catch (e) {
+    logEntry(`❌ Routing échoué : ${e.message.slice(0,50)}, fallback à CodeForge`, "warning");
+    return {
+      agentName: "CodeForge",
+      confidence: 50,
+      routingLog: "[ROUTING_FAILED] → CodeForge (fallback)",
+      agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS.CodeForge
+    };
+  }
+}
+
+// ════════════════════════════════════════
+// MISTRAL API CALL
+// ════════════════════════════════════════
+async function callMistralAPI(prompt, model) {
+  if (!state.apiKey) {
+    throw new Error("Clé API non configurée");
+  }
+
+  const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${state.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: MODELS.find(m => m.id === model)?.temp || 0.7,
+      max_tokens: 4096
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(err.slice(0, 300));
+  }
+
+  return await response.json();
+}
+
+// ════════════════════════════════════════
+// SEND MESSAGE — LOGIQUE ORCHESTRATOR + AUTO-EVAL
+// ════════════════════════════════════════
+async function sendMessage() {
+  if (state.isProcessing) return;
+
+  const input = $("#user-input");
+  const message = input.value.trim();
+  if (!message) return;
+
+  if (!state.apiKey) {
+    toast("Configurez votre clé API d'abord", "error");
+    $("#api-modal").classList.add("active");
+    return;
+  }
+
+  state.isProcessing = true;
+  input.value = "";
+  input.disabled = true;
+  $("#send-btn").disabled = true;
+  $("#send-btn").innerHTML = '<span class="spin-ring" style="display:inline-block;width:13px;height:13px;border:2px solid rgba(0,229,255,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle"></span>';
+
+  // User message
+  state.messages.push({ role: "user", content: message, ts: now(), agentName: "VOUS" });
+  renderMessages();
+  logEntry("⬆ Utilisateur : " + message.slice(0, 50) + "...", "info");
+
+  await saveChat();
+
+  try {
+    // Phase 1 : Routing
+    const routing = await routeToAgent(message);
+    logEntry(`⚙ ${routing.agentName} en cours...`, "info", routing.agentName);
+
+    // Build system prompt with agent-specific instructions
+    const agentSystemPrompt = routing.agentConfig.system;
+    const fullSystemMessage = { role: "system", content: agentSystemPrompt };
+
+    // Get previous context
+    const recentMessages = state.messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
+
+    // Call agent API
+    const agentResponse = await callMistralAPI(
+      JSON.stringify([{ role: "system", content: agentSystemPrompt }, ...recentMessages.slice(-5).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }))]),
+      state.model
+    );
+
+    let agentText = agentResponse.choices[0].message.content;
+
+    // Phase 2 : Auto-évaluation Karpathy-style
+    const evaluation = await selfEvaluate(agentText, 2);
+    agentText = evaluation.response;
+
+    // Log final
+    const agentName = routing.agentName;
+    state.messages.push({
+      role: "assistant",
+      content: agentText,
+      ts: now(),
+      agentName: agentName,
+      score: evaluation.score,
+      evaluationLogs: evaluation.logs
+    });
+
+    renderMessages();
+    logEntry(`✓ Réponse produite : ${agentName} (${Math.floor(agentText.length/1000)}K tokens)`, "success", agentName, evaluation.score);
+    await saveChat();
+
+  } catch (e) {
+    logEntry(`❌ Erreur : ${e.message.slice(0,100)}`, "warning");
+    toast(`Erreur API : ${e.message}`, "error");
+    state.messages.push({
+      role: "assistant",
+      content: `⚠ Requête échouée : ${e.message}`,
+      ts: now(),
+      agentName: "ERREUR"
+    });
+    renderMessages();
+  } finally {
+    state.isProcessing = false;
+    input.disabled = false;
+    $("#send-btn").disabled = false;
+    $("#send-btn").innerHTML = "SEND ▶";
+    input.focus();
+  }
+}
+
+// ════════════════════════════════════════
+// CHAT MANAGEMENT
+// ════════════════════════════════════════
+async function saveChat() {
+  if (!state.chatId) return;
+  await db.put('chats', {
+    id: state.chatId,
+    model: state.model,
+    messages: state.messages,
+    title: (state.messages||[]).slice(1).find(m=>m.role==='user')?.content?.slice(0,50) || "Nouvelle conversation",
+    updated: now()
+  });
+}
+
+async function newChat() {
+  state.chatId = uuid();
+  state.messages = [];
+  await saveChat();
+  renderMessages();
+  logEntry("🆕 Nouvelle conversation", "info");
+}
+
+async function loadChat(id) {
+  try {
+    const chat = await db.get('chats', id);
+    if (chat) {
+      state.chatId = id;
+      state.messages = chat.messages || [];
+      state.model = chat.model || state.model;
+      renderMessages();
+      toast("Conversation chargée", "success");
+    }
+  } catch(e) { console.error("loadChat:", e); }
+}
+
+// ════════════════════════════════════════
+// INIT & EVENTS
+// ════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  // DB
+  try { await db.open(); } catch(e) { console.error("DB init:", e); }
+
+  // API Key
+  const cookieKey = getCookie("mistral_api_key");
+  if (cookieKey && cookieKey.length >= 20) {
+    state.apiKey = cookieKey;
+    $("#api-status").innerHTML = '<span class="status-dot"></span>ONLINE';
+    $("#api-status").className = "status-pill active";
+  }
+
+  // Models
+  const modelSel = $("#model-select");
+  MODELS.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.name;
+    opt.title = `${m.desc} • ${m.tokens.toLocaleString()} tokens`;
+    modelSel.appendChild(opt);
+  });
+
+  // Init new chat
+  await newChat();
+
+  // Auto-enable log
+  activityLogEnabled = true;
+  logEntry("Activity log activé par défaut", "info");
+
+  // Events
+  $("#send-btn").onclick = sendMessage;
+  $("#user-input").onkeydown = e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  };
+  $("#clear-chat").onclick = async () => {
+    if (confirm("Effacer la conversation ?")) await newChat();
+  };
+  $("#new-chat").onclick = newChat;
+  $("#open-api-modal").onclick = () => $("#api-modal").classList.add("active");
+  $("#close-api-modal").onclick = () => $("#api-modal").classList.remove("active");
+  $("#close-api-modal-2").onclick = () => $("#api-modal").classList.remove("active");
+
+  $("#save-api-key").onclick = () => {
+    const k = $("#api-key-input").value.trim();
+    if (k.length < 20) { toast("Clé invalide — min. 20 caractères", "error"); return; }
+    setCookie("mistral_api_key", k);
+    state.apiKey = k;
+    $("#api-status").innerHTML = '<span class="status-dot"></span>ONLINE';
+    $("#api-status").className = "status-pill active";
+    $("#api-modal").classList.remove("active");
+    toast("Clé API activée", "success");
+  };
+
+  $("#activity-toggle").onclick = toggleActivityLog;
+});
+</script>
+</body>
+</html>
