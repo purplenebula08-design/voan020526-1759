@@ -757,48 +757,64 @@ Nouvelle réponse (UNIQUEMENT le contenu, pas de dialogue) :
 
 // ════════════════ ROUTING INTELLIGENT (ORCHESTRATOR) ════════════════
 async function routeToAgent(userMessage) {
-  logEntry("🧠 Analyse de la tâche...", "info");
+  logEntry("🧠 Analyse de la tâche avec contexte... ", "info");
 
   // Build agent list for orchestrator
   const agentsList = Object.values(DEFAULT_AGENT_SYSTEM_PROMPTS)
-    .map(a => `- ${a.name} : ${a.system.split('\n')[1] || 'Spécialisé'}`)
-    .join('\n');
+    .filter(a => a.name !== 'orchestrator')
+    .map(a => `- ${a.name}${a.system.includes('température') ? '' : ' (température : variable) — Spécialisé'}`)
+    .join('\n·');
 
-  const routingPrompt = `
-Tu es l'ORCHESTRATEUR VOANH AI. Tu dois décider quel agent traite cette requête.
+  // Build conversation context from recent messages
+  const chatContext = state.messages.filter(m => m.role !== 'system').slice(-6).map(m =>
+    `${m.agentName || m.role.toUpperCase()}: ${m.content.slice(0,200)}`
+  ).join('\n·');
+
+  const routingPrompt = `Tu es l'ORCHESTRATEUR VOANH AI. Ta mission : analyser CHAQUE requête utilisateur EN CONTEXTE et décider quel agent spécialisé doit la traiter.
+
+CONTEXTE CONVERSATION PRÉCÉDENTE :
+${chatContext || "Aucun contexte (nouvelle conversation)"}
 
 AGENTS DISPONIBLES :
-${agentsList}
+· ${agentsList}
 
-Règles de routage :
-- CODE → CodeForge (temp 0.2) ou DevMind
-- RECHERCHE → ResearchBot (temp 0.5)
-- IDÉES CRÉATIVES → CreativeFlow (temp 1.4)
-- EXPLICATIONS → TeacherBot (temp 0.6)
-- CRITIQUE → CriticAgent (temp 0.3)
+RÈGLES DE ROUTAGE STRICTES :
+1. CODE (génération, debug, refactoring) → CodeForge (temp 0.2) ou DevMind (temp 0.25)
+2. RECHERCHE (analyse données, synthèse facts) → ResearchBot (temp 0.5)
+3. IDÉES CRÉATIVES (brainstorm, concepts innovants) → CreativeFlow (temp 1.4)
+4. EXPLICATIONS (pédagogie, analogies, "comment ça marche") → TeacherBot (temp 0.6)
+5. CRITIQUE (avocat du diable, validation) → CriticAgent (temp 0.3)
+6. SALUTATION/QUI PROPOSER (bonjour, tu es qui...) → TeacherBot (temp 0.6) pour réponse humaine
+7. QUESTION SUR L'IA/SONTECH (quels modèles, comment ça marche) → ResearchBot (temp 0.5)
 
 Pour CHAQUE décision :
-1. Identifie le TYPE de tâche (CODE/RESEARCH/CREATIVITY/EDUCATION/CRITIQUE/etc)
-2. Choisissez l'agent avec le score de confiance
-3. Explique ton raisonnement
-4. Si l'agent n'est pas parfait, propose 2ème choix
+1. Identifie le TYPE EXACT de tâche (CODE/RESEARCH/CREATIVITY/EDUCATION/CRITIQUE/CHIT-CHAT/etc)
+2. Choisis l'agent avec un score de confiance JUSTIFIÉ
+3. Explique ton raisonnement EN PHRASE COMPLÈTE
+4. Si l'agent n'est pas évident, propose un 2ème choix
 
-Format JSON OBLIGATOIRE :
+FORMAT JSON OBLIGATOIRE (réponse UNIQUEMENT avec JSON, pas de texte avant/après) :
 {
-  "taskType": "CODE_GENERATION",
-  "selectedAgent": "CodeForge",
-  "confidence": 92,
-  "reasoning": "L'utilisateur demande de générer du code React...",
-  "alternativeAgent": "DevMind",
-  "alternativeConfidence": 65
+  "taskType": "CODE_GENERATION ou RESEARCH ou CREATIVITY ou EDUCATION ou CHAT ou QUESTION_TECH",
+  "selectedAgent": "CodeForge ou DevMind ou ResearchBot ou CreativeFlow ou TeacherBot ou CriticAgent",
+  "confidence": 85 (entier entre 0 et 100),
+  "reasoning": "Explication claire du choix en contexte de la conversation",
+  "alternativeAgent": "DevMind ou autre (ou null si premier choix évident)",
+  "alternativeConfidence": 60 (ou null si premier choix évident)
 }
 
-Réponse utilisateur : "${userMessage.slice(0, 1000)}"
+DERNIÈRE REQUÊTE UTILISATEUR :
+"${userMessage.slice(0, 1000)}"
 `.trim();
 
   try {
-    const routeResult = await callMistralAPI(routingPrompt, "mistral-large-2512");
+    const routeResult = await callMistralAPI(routingPrompt, "mistral-large-2512", 0.3);
     const routeData = JSON.parse(routeResult.choices[0].message.content);
+
+    // Validate route data
+    if (!routeData.selectedAgent || !routeData.taskType) {
+      throw new Error("Routing response format invalid");
+    }
 
     // Log le routage
     const routingLog = `[${routeData.taskType}] → ${routeData.selectedAgent} (${routeData.confidence}%)`;
@@ -807,11 +823,12 @@ Réponse utilisateur : "${userMessage.slice(0, 1000)}"
     logEntry(`   Agents : ${routeData.selectedAgent} (${routeData.confidence}%)`, "route", routeData.selectedAgent, routeData.confidence);
 
     if (routeData.alternativeAgent) {
-      logEntry(`   Alternative : ${routeData.alternativeAgent} (${routeData.alternativeConfidence}%)`, "info");
+      logEntry(`   Alternative: ${routeData.alternativeAgent} (${routeData.alternativeConfidence}%)`, "info");
     }
 
     return {
       agentName: routeData.selectedAgent,
+      temperature: MODELS.find(m => m.id.startsWith('codestral') && routeData.selectedAgent === 'CodeForge')?.temp || 0.7,
       confidence: routeData.confidence,
       routingLog,
       agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS[routeData.selectedAgent]
@@ -821,6 +838,7 @@ Réponse utilisateur : "${userMessage.slice(0, 1000)}"
     logEntry(`❌ Routing échoué : ${e.message.slice(0,50)}, fallback à CodeForge`, "warning");
     return {
       agentName: "CodeForge",
+      temperature: 0.2,
       confidence: 50,
       routingLog: "[ROUTING_FAILED] → CodeForge (fallback)",
       agentConfig: DEFAULT_AGENT_SYSTEM_PROMPTS.CodeForge
@@ -829,12 +847,31 @@ Réponse utilisateur : "${userMessage.slice(0, 1000)}"
 }
 
 // ════════════════════════════════════════
-// MISTRAL API CALL
+// MISTRAL API CALL (supports both string and messages array)
 // ════════════════════════════════════════
-async function callMistralAPI(prompt, model) {
+async function callMistralAPI(input, model, customTemp = null) {
   if (!state.apiKey) {
     throw new Error("Clé API non configurée");
   }
+
+  // Determine if input is a string (single prompt) or array of messages
+  let messages;
+  if (typeof input === 'string') {
+    // Single prompt mode
+    messages = [{ role: "user", content: input }];
+  } else if (Array.isArray(input)) {
+    // Message array mode - ensure format is valid
+    messages = input.map(msg => ({ role: msg.role || 'user', content: msg.content }));
+  } else {
+    throw new Error("Invalid input: expected string or array of messages");
+  }
+
+  if (!messages.length) {
+    throw new Error("Empty messages array");
+  }
+
+  // Get temperature (use custom if provided, else model default, else default)
+  const temperature = customTemp !== null ? customTemp : MODELS.find(m => m.id === model)?.temp || 0.7;
 
   const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
@@ -844,15 +881,20 @@ async function callMistralAPI(prompt, model) {
     },
     body: JSON.stringify({
       model: model,
-      messages: [{ role: "user", content: prompt }],
-      temperature: MODELS.find(m => m.id === model)?.temp || 0.7,
+      messages: messages,
+      temperature: temperature,
       max_tokens: 4096
     })
   });
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(err.slice(0, 300));
+    const errText = await response.text();
+    let err = errText.slice(0, 300);
+    try {
+      const jsonErr = JSON.parse(errText);
+      err = jsonErr.message || jsonErr.error?.message || err;
+    } catch(e) {}
+    throw new Error(err);
   }
 
   return await response.json();
@@ -894,15 +936,21 @@ async function sendMessage() {
 
     // Build system prompt with agent-specific instructions
     const agentSystemPrompt = routing.agentConfig.system;
-    const fullSystemMessage = { role: "system", content: agentSystemPrompt };
 
     // Get previous context
-    const recentMessages = state.messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
+    const recentMessages = state.messages.filter(m => m.role !== 'system').slice(-5).map(m => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content
+    }));
 
-    // Call agent API
+    // Call agent API with system prompt + chat history + agent-specific temperature
     const agentResponse = await callMistralAPI(
-      JSON.stringify([{ role: "system", content: agentSystemPrompt }, ...recentMessages.slice(-5).map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.content }))]),
-      state.model
+      [
+        { role: "system", content: agentSystemPrompt },
+        ...recentMessages
+      ],
+      state.model,
+      routing.temperature || 0.7
     );
 
     let agentText = agentResponse.choices[0].message.content;
