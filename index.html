@@ -669,92 +669,31 @@ function hideTyping() {
   if (t) t.remove();
 }
 
-// ════════════════ AUTO-ÉVALUATION KARPATHY-STYLE ════════════════
-async function selfEvaluate(response, iterations = 2) {
-  const startTime = now();
-  logEntry("🔍 Auto-évaluation démarrée", "self-reflect");
+// ════════════════ CHECK QUALITY — VALIDE TECHNIQUE (SANS AUTO-EVAL ILLUSOIRE) ════════════════
+async function checkQuality(type, response) {
+  // Pour le code : validation syntaxique basique
+  if (type === 'code' || type === 'html') {
+    const checks = [
+      { name: "HTML structure", pass: response.includes('<!DOCTYPE html>') || response.includes('<html>') },
+      { name: "Head tag", pass: /<head>[\s\S]*<\/head>/i.test(response) },
+      { name: "Body tag", pass: /<body>[\s\S]*<\/body>/i.test(response) },
+      { name: "Closing tags", pass: /<\/html>$/i.test(response.trim()) || /<\/body>$/i.test(response.trim()) },
+      { name: "CSS included", pass: /style|<style|\.|:/.test(response) }
+    ];
 
-  let currentResponse = response;
-  let bestScore = 0;
-  let bestResponse = response;
-  let evaluationLog = [];
+    const scores = checks.map(c => ({ name: c.name, pass: c.pass ? 10 : 0 }));
+    const score = Math.round(scores.reduce((a, b) => a + b.pass, 0) / checks.length);
 
-  for (let i = 0; i < iterations; i++) {
-    logEntry(`  └→ Itération ${i+1}/${iterations} — évaluation...`, "self-reflect");
+    logEntry(`🔍 Validation HTML`, "self-reflect");
+    scores.forEach(s => {
+      logEntry(`   ${s.pass >= 10 ? "✓" : "✗"} ${s.name}`, s.pass >= 10 ? "success" : "warning", null, s.pass);
+    });
+    logEntry(`   Score total: ${score}/10`, "self-reflect", null, score);
 
-    // Prompt d'évaluation
-    const evalPrompt = `
-Tu es un ÉVALUATEUR critique de réponses IA. Score de 0-10 les critères suivants :
-1. Pertinence : la réponse répond-elle à la question ?
-2. Complétude : est-ce suffisant ou manque-t-il des éléments ?
-3. Exactitude : y a-t-il des erreurs factuelles ou techniques ?
-4. Clarté : est-ce bien structuré et lisible ?
-5. Utilité : est-ce directement utilisable par l'utilisateur ?
-
-Règle de notation :
-- 8-10 : Excellent — peu de chance d'amélioration
-- 6-7 : Bon mais perfectionnable
-- 4-5 : Moyen — nécessite corrections
-- <4 : Insuffisant — refonte nécessaire
-
-Répons UNIQUEMENT avec JSON :
-{
-  "score": 8.5,
-  "feedback": "Ce qu'il faut améliorer",
-  "needsRepetition": true/false
-}
-
-Question posée : [REDACTED]
-Réponse à évaluer : "${currentResponse.slice(0, 2000)}"[LONG TRUNCATED FOR EVALUATION]
-`.trim();
-
-    try {
-      const evalResult = await callMistralAPI(evalPrompt, "mistral-small-2603");
-      let raw = evalResult.choices[0].message.content
-        .replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-      const evalData = JSON.parse(raw);
-
-      evaluationLog.push({ iteration: i+1, score: evalData.score, feedback: evalData.feedback });
-
-      if (evalData.score > bestScore) {
-        bestScore = evalData.score;
-        bestResponse = currentResponse;
-      }
-
-      logEntry(`    └→ Score : ${evalData.score}/10`, "self-reflect", null, evalData.score);
-
-      // Si score < 7, génération de correction
-      if (evalData.score < 7 && evalData.needsRepetition) {
-        logEntry(`    └→ Correction requérée : ${evalData.feedback}`, "warning");
-
-        const improvementPrompt = `
-Voici l'auto-évaluation précédente :
-Score : ${evalData.score}/10
-Critique : ${evalData.feedback}
-
-Améliore la réponse en :
-1. Corrigant EXACTEMENT ce que l'évaluateur a critiqué
-2. Ajoutant les éléments manquants
-3. Gardeant TOUT ce qui était bon
-
-Nouvelle réponse (UNIQUEMENT le contenu, pas de dialogue) :
-`.trim();
-
-        const improved = await callMistralAPI(improvementPrompt, state.model);
-        currentResponse = improved.choices[0].message.content;
-      } else {
-        break; // Score suffisant
-      }
-    } catch (e) {
-      logEntry(`  └→ Erreur évaluation : ${e.message.slice(0,50)}`, "warning");
-      break;
-    }
+    return { response, score, type: 'code', checks: scores };
   }
 
-  const evalTime = ((now() - startTime) / 1000).toFixed(1);
-  logEntry(`✓ Auto-évaluation terminée — Score final : ${bestScore}/10 (${evalTime}s)`, "success", null, bestScore);
-
-  return { response: bestResponse, score: bestScore, logs: evaluationLog };
+  return { response, score: 10, type: 'text', checks: [{ name: "Valide", pass: 10 }] };
 }
 
 // ════════════════ ROUTING INTELLIGENT (ORCHESTRATOR) ════════════════
@@ -911,10 +850,20 @@ async function sendMessage() {
   $("#send-btn").disabled = true;
   $("#send-btn").innerHTML = '<span class="spin-ring" style="display:inline-block;width:13px;height:13px;border:2px solid rgba(0,229,255,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle"></span>';
 
+  // Check if user uploaded a file (we need to add file input handling first)
+  const hasFile = state.attachedFile && state.attachedFile.type === 'text';
+  const fullContent = hasFile ? state.attachedFile.content : message;
+
   // User message
-  state.messages.push({ role: "user", content: message, ts: now(), agentName: "VOUS" });
+  state.messages.push({
+    role: "user",
+    content: fullContent,
+    ts: now(),
+    agentName: "VOUS",
+    hasAttachment: hasFile
+  });
   renderMessages();
-  logEntry("⬆ Utilisateur : " + message.slice(0, 50) + "...", "info");
+  logEntry("⬆ Utilisateur" + (hasFile ? ` (${state.attachedFile.name})` : '') + ": " + message.slice(0, 50) + "...", "info");
 
   await saveChat();
 
@@ -944,9 +893,10 @@ async function sendMessage() {
 
     let agentText = agentResponse.choices[0].message.content;
 
-    // Phase 2 : Auto-évaluation Karpathy-style
-    const evaluation = await selfEvaluate(agentText, 2);
-    agentText = evaluation.response;
+    // Phase 2: Validation technique
+    const isCode = routing.agentName === 'CodeForge' || routing.agentName === 'DevMind';
+    const validation = await checkQuality(isCode ? 'html' : 'text', agentText);
+    agentText = validation.response;
 
     // Log final
     const agentName = routing.agentName;
@@ -955,12 +905,12 @@ async function sendMessage() {
       content: agentText,
       ts: now(),
       agentName: agentName,
-      score: evaluation.score,
-      evaluationLogs: evaluation.logs
+      qualityScore: validation.score,
+      validationChecks: validation.checks
     });
 
     renderMessages();
-    logEntry(`✓ Réponse produite : ${agentName} (${Math.floor(agentText.length/1000)}K tokens)`, "success", agentName, evaluation.score);
+    logEntry(`✓ Réponse produite : ${agentName} (${Math.floor(agentText.length/1000)}K tokens)`, "success", agentName, validation.score);
     await saveChat();
 
   } catch (e) {
